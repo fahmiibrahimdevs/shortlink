@@ -9,7 +9,7 @@
         <div class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-cyan-400 opacity-50 rounded-tl-2xl"></div>
         <div class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-fuchsia-400 opacity-50 rounded-br-2xl"></div>
 
-        <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500 tracking-widest uppercase mb-4 uppercase drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+        <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500 tracking-widest uppercase mb-4 drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">
             SYSTEM.SHORTLINK
         </h2>
         <p class="text-cyan-100/60 max-w-lg mb-8 text-sm uppercase tracking-widest">
@@ -111,30 +111,52 @@
                             </div>
                             <div class="flex items-center gap-3 pr-2">
                                 <button
-                                    x-data="{ copied: false }"
-                                    @click="
-                                        navigator.clipboard.writeText('{{ url($link->short_code) }}');
-                                        copied = true;
-                                        setTimeout(() => copied = false, 2000);
-                                    "
-                                    class="text-cyan-500 hover:text-cyan-300 bg-cyan-950/30 hover:bg-cyan-900/50 border border-cyan-900/50 hover:border-cyan-500/50 p-3 rounded-xl transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:scale-110"
-                                    title="COPY LINK"
+                                    x-data="{ 
+                                        copied: false,
+                                        copyToClipboard(text) {
+                                            if (navigator.clipboard && window.isSecureContext) {
+                                                navigator.clipboard.writeText(text);
+                                            } else {
+                                                let textArea = document.createElement('textarea');
+                                                textArea.value = text;
+                                                textArea.style.position = 'fixed';
+                                                textArea.style.left = '-999999px';
+                                                textArea.style.top = '-999999px';
+                                                document.body.appendChild(textArea);
+                                                textArea.focus();
+                                                textArea.select();
+                                                try {
+                                                    document.execCommand('copy');
+                                                } catch (err) {
+                                                    console.error('Failed to copy text: ', err);
+                                                }
+                                                textArea.remove();
+                                            }
+                                            this.copied = true;
+                                            setTimeout(() => this.copied = false, 2000);
+                                        }
+                                    }"
+                                    @click="copyToClipboard('{{ url($link->short_code) }}')"
+                                    class="flex items-center gap-2 text-cyan-500 hover:text-cyan-300 bg-cyan-950/30 hover:bg-cyan-900/50 border border-cyan-900/50 hover:border-cyan-500/50 px-4 py-2.5 rounded-xl transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] font-mono uppercase text-xs tracking-wider"
                                 >
-                                    <svg x-show="!copied" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <svg x-show="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                     </svg>
-                                    <svg x-show="copied" style="display: none;" class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <span x-show="!copied">Copy Link</span>
+
+                                    <svg x-show="copied" style="display: none;" class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
+                                    <span x-show="copied" style="display: none;" class="text-green-400">Copied!</span>
                                 </button>
                                 
                                 <button 
                                     wire:click="deleteLink({{ $link->id }})"
                                     wire:confirm="PURGE RECORD? This action cannot be undone."
-                                    class="text-red-500 hover:text-red-400 bg-red-950/30 hover:bg-red-900/50 border border-red-900/50 hover:border-red-500/50 p-3 rounded-xl transition-all duration-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:scale-110"
+                                    class="text-red-500 hover:text-red-400 bg-red-950/30 hover:bg-red-900/50 border border-red-900/50 hover:border-red-500/50 p-2.5 rounded-xl transition-all duration-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]"
                                     title="PURGE LINK"
                                 >
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
                                 </button>
